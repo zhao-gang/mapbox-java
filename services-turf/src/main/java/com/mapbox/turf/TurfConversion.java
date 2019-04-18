@@ -3,9 +3,22 @@ package com.mapbox.turf;
 import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.Geometry;
+import com.mapbox.geojson.GeometryCollection;
+import com.mapbox.geojson.LineString;
+import com.mapbox.geojson.MultiLineString;
+import com.mapbox.geojson.MultiPoint;
+import com.mapbox.geojson.MultiPolygon;
+import com.mapbox.geojson.Point;
+import com.mapbox.geojson.Polygon;
 import com.mapbox.turf.TurfConstants.TurfUnitCriteria;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -162,5 +175,84 @@ public final class TurfConversion {
       finalUnit = TurfConstants.UNIT_DEFAULT;
     }
     return radiansToLength(lengthToRadians(distance, originalUnit), finalUnit);
+  }
+
+  /**
+   * Takes a {@link FeatureCollection} and
+   * returns all positions as {@link Point} objects.
+   *
+   * @param featureCollection a {@link FeatureCollection} object
+   * @return a new {@link FeatureCollection} object with {@link Point} objects
+   * @since 4.7.0
+   */
+  public static FeatureCollection explode(@NonNull FeatureCollection featureCollection) {
+    List<Feature> featuresForFinalFeatureCollection = new ArrayList<>();
+    for (Feature singleFeature : featureCollection.features()) {
+      for (int i = 0; i < explode(singleFeature.geometry()).features().size(); i++) {
+        featuresForFinalFeatureCollection.add(explode(singleFeature.geometry()).features().get(i));
+      }
+    }
+    return FeatureCollection.fromFeatures(featuresForFinalFeatureCollection);
+  }
+
+  /**
+   * Takes a {@link Feature}  and
+   * returns its position as a {@link Point} objects.
+   *
+   * @param feature a {@link Feature} object
+   * @return a new {@link FeatureCollection} object with {@link Point} objects
+   * @since 4.7.0
+   */
+  public static FeatureCollection explode(@NonNull Feature feature) {
+    return explode(feature.geometry());
+  }
+
+  /**
+   * Takes a {@link Geometry} object, checks what type of geometry it is,
+   * and then returns all positions as {@link Point} objects.
+   *
+   * @param geometry a {@link Geometry} object
+   * @return a new {@link FeatureCollection} object with {@link Point} objects
+   * @since 4.7.0
+   */
+  private static FeatureCollection explode(@NonNull Geometry geometry) {
+    List<Feature> featuresForFinalFeatureCollection = new ArrayList<>();
+    if (geometry instanceof Point) {
+      featuresForFinalFeatureCollection.add(Feature.fromGeometry(geometry));
+    } else if (geometry instanceof MultiPoint) {
+      for (Point singlePoint : TurfMeta.coordAll((MultiPoint) geometry)) {
+        featuresForFinalFeatureCollection.add(Feature.fromGeometry(singlePoint));
+      }
+    } else if (geometry instanceof LineString) {
+      for (Point singlePoint : TurfMeta.coordAll((LineString) geometry)) {
+        featuresForFinalFeatureCollection.add(Feature.fromGeometry(singlePoint));
+      }
+    } else if (geometry instanceof MultiLineString) {
+      for (Point singlePoint : TurfMeta.coordAll((MultiLineString) geometry)) {
+        featuresForFinalFeatureCollection.add(Feature.fromGeometry(singlePoint));
+      }
+    } else if (geometry instanceof Polygon) {
+      for (Point singlePoint : TurfMeta.coordAll((Polygon) geometry, true)) {
+        featuresForFinalFeatureCollection.add(Feature.fromGeometry(singlePoint));
+      }
+    } else if (geometry instanceof MultiPolygon) {
+      List<Point> resultCoords = TurfMeta.coordAll((MultiPolygon) geometry, true);
+      for (Point singlePoint : resultCoords) {
+        featuresForFinalFeatureCollection.add(Feature.fromGeometry(singlePoint));
+      }
+    } else if (geometry instanceof GeometryCollection) {
+      // recursive
+      for (Geometry singleGeometry : ((GeometryCollection) geometry).geometries()) {
+        if (explode(singleGeometry).features() != null
+          && explode(singleGeometry).features().size() > 0) {
+          for (Feature singleFeature : explode(singleGeometry).features()) {
+            featuresForFinalFeatureCollection.add(singleFeature);
+          }
+        }
+      }
+    } else {
+      throw new RuntimeException(("Unknown geometry class: " + geometry.getClass()));
+    }
+    return FeatureCollection.fromFeatures(featuresForFinalFeatureCollection);
   }
 }
