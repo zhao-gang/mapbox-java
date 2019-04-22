@@ -3,6 +3,9 @@ package com.mapbox.turf;
 import android.support.annotation.NonNull;
 
 import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.Geometry;
+import com.mapbox.geojson.GeometryCollection;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.MultiLineString;
 import com.mapbox.geojson.MultiPoint;
@@ -140,6 +143,76 @@ public final class TurfMeta {
       }
     }
     return coords;
+  }
+
+  /**
+   * Get all coordinates from a {@link Feature} object, returning a {@link List} of {@link Point}
+   * objects.
+   *
+   * @param feature the {@link Feature} that you'd like to extract the Points from.
+   * @return a {@code List} made up of {@link Point}s
+   * @since 4.7.0
+   */
+  public static List<Point> coordAll(@NonNull Feature feature) {
+    return coordAll(FeatureCollection.fromFeature(feature));
+  }
+
+  /**
+   * Get all coordinates from a {@link FeatureCollection} object, returning a
+   * {@link List} of {@link Point} objects.
+   *
+   * @param featureCollection the {@link FeatureCollection} that you'd like
+   *                          to extract the Points from.
+   * @return a {@code List} made up of {@link Point}s
+   * @since 4.7.0
+   */
+  public static List<Point> coordAll(@NonNull FeatureCollection featureCollection) {
+    List<Point> finalCoordsList = new ArrayList<>();
+    for (Feature singleFeature : featureCollection.features()) {
+      finalCoordsList.addAll(coordAll(singleFeature.geometry()));
+    }
+    return finalCoordsList;
+  }
+
+  /**
+   * Get all coordinates from a {@link Geometry} object, returning a {@link List} of {@link Point}
+   * objects.
+   *
+   * @param geometry the {@link Geometry} object to extract the {@link Point}s from
+   * @return a {@code List} made up of {@link Point}s
+   * @since 4.7.0
+   */
+  private static List<Point> coordAll(@NonNull Geometry geometry) {
+    List<Point> finalCoordsList = new ArrayList<>();
+    if (geometry instanceof Point) {
+      finalCoordsList.addAll(TurfMeta.coordAll((Point) geometry));
+    } else if (geometry instanceof MultiPoint) {
+      for (Point singlePoint : TurfMeta.coordAll((MultiPoint) geometry)) {
+        finalCoordsList.addAll(coordAll(singlePoint));
+      }
+    } else if (geometry instanceof LineString) {
+      for (Point singlePoint : TurfMeta.coordAll((LineString) geometry)) {
+        finalCoordsList.addAll(coordAll(singlePoint));
+      }
+    } else if (geometry instanceof MultiLineString) {
+      for (Point singlePoint : TurfMeta.coordAll((MultiLineString) geometry)) {
+        finalCoordsList.addAll(coordAll(singlePoint));
+      }
+    } else if (geometry instanceof Polygon) {
+      for (Point singlePoint : TurfMeta.coordAll((Polygon) geometry, true)) {
+        finalCoordsList.addAll(coordAll(singlePoint));
+      }
+    } else if (geometry instanceof MultiPolygon) {
+      for (Point singlePoint : TurfMeta.coordAll((MultiPolygon) geometry, true)) {
+        finalCoordsList.addAll(coordAll(singlePoint));
+      }
+    } else if (geometry instanceof GeometryCollection) {
+      // recursive
+      for (Geometry singleGeometry : ((GeometryCollection) geometry).geometries()) {
+        finalCoordsList.addAll(coordAll(singleGeometry));
+      }
+    }
+    return finalCoordsList;
   }
 
   /**
