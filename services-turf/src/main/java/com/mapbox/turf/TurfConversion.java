@@ -188,9 +188,7 @@ public final class TurfConversion {
   public static FeatureCollection explode(@NonNull FeatureCollection featureCollection) {
     List<Feature> featuresForFinalFeatureCollection = new ArrayList<>();
     for (Feature singleFeature : featureCollection.features()) {
-      for (int i = 0; i < explode(singleFeature.geometry()).features().size(); i++) {
-        featuresForFinalFeatureCollection.add(explode(singleFeature.geometry()).features().get(i));
-      }
+      featuresForFinalFeatureCollection.addAll(explode(singleFeature.geometry()).features());
     }
     return FeatureCollection.fromFeatures(featuresForFinalFeatureCollection);
   }
