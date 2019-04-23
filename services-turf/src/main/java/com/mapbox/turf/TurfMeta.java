@@ -154,7 +154,7 @@ public final class TurfMeta {
    * @since 4.7.0
    */
   public static List<Point> coordAll(@NonNull Feature feature) {
-    return coordAll(FeatureCollection.fromFeature(feature));
+    return addCoordAll(new ArrayList<Point>(), feature);
   }
 
   /**
@@ -169,9 +169,14 @@ public final class TurfMeta {
   public static List<Point> coordAll(@NonNull FeatureCollection featureCollection) {
     List<Point> finalCoordsList = new ArrayList<>();
     for (Feature singleFeature : featureCollection.features()) {
-      finalCoordsList.addAll(coordAll(singleFeature.geometry()));
+      finalCoordsList.addAll(addCoordAll(finalCoordsList, singleFeature));
     }
     return finalCoordsList;
+  }
+
+  private static List<Point> addCoordAll(@NonNull List<Point> pointList, @NonNull Feature feature) {
+    pointList.addAll(coordAllFromSingleGeometry(feature.geometry()));
+    return pointList;
   }
 
   /**
@@ -182,7 +187,7 @@ public final class TurfMeta {
    * @return a {@code List} made up of {@link Point}s
    * @since 4.7.0
    */
-  private static List<Point> coordAll(@NonNull Geometry geometry) {
+  private static List<Point> coordAllFromSingleGeometry(@NonNull Geometry geometry) {
     List<Point> finalCoordsList = new ArrayList<>();
     if (geometry instanceof Point) {
       finalCoordsList.addAll(TurfMeta.coordAll((Point) geometry));
@@ -209,7 +214,7 @@ public final class TurfMeta {
     } else if (geometry instanceof GeometryCollection) {
       // recursive
       for (Geometry singleGeometry : ((GeometryCollection) geometry).geometries()) {
-        finalCoordsList.addAll(coordAll(singleGeometry));
+        finalCoordsList.addAll(coordAllFromSingleGeometry(singleGeometry));
       }
     }
     return finalCoordsList;
