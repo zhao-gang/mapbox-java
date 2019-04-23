@@ -17,6 +17,10 @@ buildscript {
     classpath pluginDependencies.errorprone
     classpath pluginDependencies.buildConfig
     classpath pluginDependencies.jacoco
+
+    // These plugins are for publishing to Bintray
+    classpath pluginDependencies.bintray
+    classpath pluginDependencies.maven
   }
 }
 
@@ -31,6 +35,8 @@ allprojects {
     google()
     mavenCentral()
     jcenter()
+    // For publishing to Bintray
+    maven { url 'https://mapbox.bintray.com/mapbox' }
   }
   group = GROUP
   version = VERSION_NAME

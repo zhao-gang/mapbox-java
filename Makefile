@@ -28,10 +28,10 @@ javadoc:
 	./gradlew :services:javadoc; mv services/build/docs/javadoc/ ./documentation/services/javadoc/ ; \
 
 publish:
-	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services-core:uploadArchives ; \
-	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services-geojson:uploadArchives ; \
-	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services:uploadArchives ; \
-	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services-turf:uploadArchives ; \
+	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services-core:bintrayUpload ; \
+	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services-geojson:bintrayUpload ; \
+	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services:bintrayUpload ; \
+	export IS_LOCAL_DEVELOPMENT=false; ./gradlew :services-turf:bintrayUpload ; \
 
 publish-local:
 	# This publishes to ~/.m2/repository/com/mapbox/mapboxsdk
